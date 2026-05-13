@@ -484,26 +484,88 @@ async def mcp_endpoint(request: Request):
                 }
             }
         }
-    
-    if method == "tools/list":
+ if method == "tools/list":
         return {
             "jsonrpc": "2.0",
             "id": body.get("id"),
             "result": {
                 "tools": [
-                    {"name": "wmaf_evaluate_adjacency", "description": "Score a specific adjacency for a specific company using the full WMAF pipeline"},
-                    {"name": "wmaf_score_internal_adjacency", "description": "Find revenue opportunities inside existing customer relationships"},
-                    {"name": "wmaf_rank_pathways", "description": "Score and rank multiple adjacency candidates"},
-                    {"name": "wmaf_identify_signals", "description": "Identify market convergence signals for a sector"},
-                    {"name": "wmaf_generate_model", "description": "Generate a complete adjacency model for any company"}
+                    {
+                        "name": "wmaf_evaluate_adjacency",
+                        "description": "Score a specific adjacency for a specific company using the full WMAF pipeline",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "target_adjacency": {"type": "string"},
+                                "variables": {"type": "object"}
+                            },
+                            "required": ["company_name", "target_adjacency", "variables"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_score_internal_adjacency",
+                        "description": "Find revenue opportunities inside existing customer relationships",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "existing_services": {"type": "string"},
+                                "customer_purchases_elsewhere": {"type": "string"}
+                            },
+                            "required": ["company_name", "existing_services", "customer_purchases_elsewhere"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_rank_pathways",
+                        "description": "Score and rank multiple adjacency candidates",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "candidates": {"type": "array"}
+                            },
+                            "required": ["company_name", "candidates"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_identify_signals",
+                        "description": "Identify market convergence signals for a sector",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "sector": {"type": "string"},
+                                "time_horizon": {"type": "string"},
+                                "geographic_scope": {"type": "string"}
+                            },
+                            "required": ["sector"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_generate_model",
+                        "description": "Generate a complete adjacency model for any company",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "industry": {"type": "string"},
+                                "core_service": {"type": "string"}
+                            },
+                            "required": ["company_name", "industry", "core_service"]
+                        }
+                    }
                 ]
             }
         }
-    
+
     return {
         "jsonrpc": "2.0",
         "id": body.get("id"),
         "error": {
+            "code": -32601,
+            "message": f"Method not found: {method}"
+        }
+    }   
             "code": -32601,
             "message": f"Method not found: {method}"
         }
