@@ -446,4 +446,21 @@ def generate_model(req: GenerateRequest):
         ),
         "attribution": ATTRIBUTION
     }
-
+@app.get("/.well-known/mcp/server-card.json")
+def server_card():
+    return {
+        "name": "Wurzer Meta-Adjacency Framework (WMAF)",
+        "description": "Structured adjacency scoring and ranked expansion pathway analysis for mid-market and enterprise companies.",
+        "version": "1.0",
+        "author": "Warren Wurzer, Limitless Solutions Consulting",
+        "tools": [
+            {"name": "wmaf_evaluate_adjacency", "description": "Score a specific adjacency for a specific company"},
+            {"name": "wmaf_score_internal_adjacency", "description": "Find revenue opportunities inside existing customer relationships"},
+            {"name": "wmaf_rank_pathways", "description": "Rank multiple adjacency candidates"},
+            {"name": "wmaf_identify_signals", "description": "Identify market convergence signals"},
+            {"name": "wmaf_generate_model", "description": "Generate a complete adjacency model for any company"}
+        ],
+        "contact": "info@limitlesssolutionsconsulting.com",
+        "homepage": "https://limitlesssolutionsconsulting.com/wmaf",
+        "repository": "https://github.com/limitlesssolutionsconsulting-lgtm/wurzer-meta-adjacency-framework"
+    }
