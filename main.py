@@ -6,7 +6,7 @@ Contact: info@limitlesssolutionsconsulting.com
 GitHub: https://github.com/limitlesssolutionsconsulting-lgtm/wurzer-meta-adjacency-framework
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException , Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -463,4 +463,48 @@ def server_card():
         "contact": "info@limitlesssolutionsconsulting.com",
         "homepage": "https://limitlesssolutionsconsulting.com/wmaf",
         "repository": "https://github.com/limitlesssolutionsconsulting-lgtm/wurzer-meta-adjacency-framework"
+    }
+@app.post("/mcp")
+async def mcp_endpoint(request: Request):
+    body = await request.json()
+    method = body.get("method", "")
+    
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "serverInfo": {
+                    "name": "Wurzer Meta-Adjacency Framework (WMAF)",
+                    "version": "1.0.0"
+                },
+                "capabilities": {
+                    "tools": {}
+                }
+            }
+        }
+    
+    if method == "tools/list":
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {
+                "tools": [
+                    {"name": "wmaf_evaluate_adjacency", "description": "Score a specific adjacency for a specific company using the full WMAF pipeline"},
+                    {"name": "wmaf_score_internal_adjacency", "description": "Find revenue opportunities inside existing customer relationships"},
+                    {"name": "wmaf_rank_pathways", "description": "Score and rank multiple adjacency candidates"},
+                    {"name": "wmaf_identify_signals", "description": "Identify market convergence signals for a sector"},
+                    {"name": "wmaf_generate_model", "description": "Generate a complete adjacency model for any company"}
+                ]
+            }
+        }
+    
+    return {
+        "jsonrpc": "2.0",
+        "id": body.get("id"),
+        "error": {
+            "code": -32601,
+            "message": f"Method not found: {method}"
+        }
     }
