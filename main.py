@@ -6,7 +6,7 @@ Contact: info@limitlesssolutionsconsulting.com
 GitHub: https://github.com/limitlesssolutionsconsulting-lgtm/wurzer-meta-adjacency-framework
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -178,6 +178,115 @@ class GenerateRequest(BaseModel):
 
 
 # ─────────────────────────────────────────────
+# MCP ENDPOINT
+# ─────────────────────────────────────────────
+
+@app.post("/mcp")
+async def mcp_endpoint(request: Request):
+    body = await request.json()
+    method = body.get("method", "")
+
+    if method == "initialize":
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {
+                "protocolVersion": "2024-11-05",
+                "serverInfo": {
+                    "name": "Wurzer Meta-Adjacency Framework (WMAF)",
+                    "version": "1.0.0"
+                },
+                "capabilities": {
+                    "tools": {}
+                }
+            }
+        }
+
+    if method == "tools/list":
+        return {
+            "jsonrpc": "2.0",
+            "id": body.get("id"),
+            "result": {
+                "tools": [
+                    {
+                        "name": "wmaf_evaluate_adjacency",
+                        "description": "Score a specific adjacency for a specific company using the full WMAF pipeline",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "target_adjacency": {"type": "string"},
+                                "variables": {"type": "object"}
+                            },
+                            "required": ["company_name", "target_adjacency", "variables"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_score_internal_adjacency",
+                        "description": "Find revenue opportunities inside existing customer relationships",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "existing_services": {"type": "string"},
+                                "customer_purchases_elsewhere": {"type": "string"}
+                            },
+                            "required": ["company_name", "existing_services", "customer_purchases_elsewhere"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_rank_pathways",
+                        "description": "Score and rank multiple adjacency candidates",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "candidates": {"type": "array"}
+                            },
+                            "required": ["company_name", "candidates"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_identify_signals",
+                        "description": "Identify market convergence signals for a sector",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "sector": {"type": "string"},
+                                "time_horizon": {"type": "string"},
+                                "geographic_scope": {"type": "string"}
+                            },
+                            "required": ["sector"]
+                        }
+                    },
+                    {
+                        "name": "wmaf_generate_model",
+                        "description": "Generate a complete adjacency model for any company",
+                        "inputSchema": {
+                            "type": "object",
+                            "properties": {
+                                "company_name": {"type": "string"},
+                                "industry": {"type": "string"},
+                                "core_service": {"type": "string"}
+                            },
+                            "required": ["company_name", "industry", "core_service"]
+                        }
+                    }
+                ]
+            }
+        }
+
+    return {
+        "jsonrpc": "2.0",
+        "id": body.get("id"),
+        "error": {
+            "code": -32601,
+            "message": f"Method not found: {method}"
+        }
+    }
+
+
+# ─────────────────────────────────────────────
 # ENDPOINTS
 # ─────────────────────────────────────────────
 
@@ -200,12 +309,28 @@ def root():
     }
 
 
+@app.get("/.well-known/mcp/server-card.json")
+def server_card():
+    return {
+        "name": "Wurzer Meta-Adjacency Framework (WMAF)",
+        "description": "Structured adjacency scoring and ranked expansion pathway analysis for mid-market and enterprise companies.",
+        "version": "1.0",
+        "author": "Warren Wurzer, Limitless Solutions Consulting",
+        "tools": [
+            {"name": "wmaf_evaluate_adjacency", "description": "Score a specific adjacency for a specific company"},
+            {"name": "wmaf_score_internal_adjacency", "description": "Find revenue opportunities inside existing customer relationships"},
+            {"name": "wmaf_rank_pathways", "description": "Rank multiple adjacency candidates"},
+            {"name": "wmaf_identify_signals", "description": "Identify market convergence signals"},
+            {"name": "wmaf_generate_model", "description": "Generate a complete adjacency model for any company"}
+        ],
+        "contact": "info@limitlesssolutionsconsulting.com",
+        "homepage": "https://limitlesssolutionsconsulting.com/wmaf",
+        "repository": "https://github.com/limitlesssolutionsconsulting-lgtm/wurzer-meta-adjacency-framework"
+    }
+
+
 @app.post("/wmaf/evaluate")
 def evaluate_adjacency(req: EvaluateRequest):
-    """
-    Run the full WMAF scoring pipeline for one company and one adjacency.
-    Returns adjacency score, verdict, archetype, decision tree result, and reasoning signature.
-    """
     variables = req.variables.dict()
     tree = run_decision_tree(variables)
 
@@ -267,10 +392,6 @@ def evaluate_adjacency(req: EvaluateRequest):
 
 @app.post("/wmaf/internal")
 def score_internal_adjacency(req: InternalRequest):
-    """
-    Score internal adjacency — revenue opportunities already inside existing customer relationships.
-    Core question: what are existing customers buying elsewhere that this company could provide?
-    """
     score = round(
         (req.customer_trust_score * 0.40) +
         (req.capability_fit * 0.35) +
@@ -309,10 +430,6 @@ def score_internal_adjacency(req: InternalRequest):
 
 @app.post("/wmaf/rank")
 def rank_pathways(req: RankRequest):
-    """
-    Score multiple adjacency candidates and return a ranked list.
-    Use when comparing several expansion options for the same company.
-    """
     results = []
     for candidate in req.candidates:
         variables = candidate.variables.dict()
@@ -346,9 +463,6 @@ def rank_pathways(req: RankRequest):
 
 @app.post("/wmaf/signals")
 def identify_signals(req: SignalsRequest):
-    """
-    Identify convergence signals indicating a market window is opening or closing.
-    """
     return {
         "wmaf_version": "1.0",
         "sector": req.sector,
@@ -396,10 +510,6 @@ def identify_signals(req: SignalsRequest):
 
 @app.post("/wmaf/generate")
 def generate_model(req: GenerateRequest):
-    """
-    Meta-layer function. Generates a complete adjacency model for any company.
-    Returns both external and internal adjacency assessment with recommended next steps.
-    """
     default_vars = {
         "capability_distance":   0.75,
         "customer_overlap":      0.80,
